@@ -4,6 +4,7 @@ const cors = require('cors')
 var morgan = require('morgan')
 
 app.use(cors())
+app.use(express.static('dist'))
 
 // logging for post requests
 morgan.token('post', (request, response) => {
