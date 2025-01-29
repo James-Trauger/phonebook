@@ -8,6 +8,7 @@
     "dev": "nodemon index.js",
     "build:ui": "rm -rf dist && cd ../fullstackopen/part2/phonebook/ && npm run build && cp -r dist ../../../phonebook",
     "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && git push",
+    "lint": "eslint .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -28,6 +29,10 @@
     "morgan": "^1.10.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.19.0",
+    "@stylistic/eslint-plugin-js": "^3.0.0",
+    "eslint": "^9.19.0",
+    "globals": "^15.14.0",
     "nodemon": "^3.1.9"
   }
 }

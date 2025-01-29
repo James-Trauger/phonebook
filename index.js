@@ -9,8 +9,8 @@ app.use(cors())
 app.use(express.static('dist'))
 
 // logging for post requests
-morgan.token('post', (request, response) => {
-    return request.method === 'POST'
+morgan.token('post', (request) => {
+  return request.method === 'POST'
     ? JSON.stringify(request.body)
     : ''
 })
@@ -20,83 +20,92 @@ app.use(morgan('tiny'))
 app.use(morgan(':post'))
 
 app.get('/api/persons', (request, response, next) => {
-    Person.find({}).then(persons => {
-        response.json(persons)
-    })
+  Person.find({}).then(persons => {
+    response.json(persons)
+  })
     .catch(error => next(error))
 })
 
 app.get('/info', (request, response, next) => {
-    Person.countDocuments()
+  Person.countDocuments()
     .then(entries => {
-        const date = new Date()
-    
-        const page = 
-        `
+      const date = new Date()
+      const page = `
         <p>Phonebook has info for ${entries} people</p>
         <p>${date}</p>
         `
-
-        response.send(page)
+      response.send(page)
     })
     .catch(error => next(error))
 
 })
 
 app.get('/api/persons/:id', (request, response, next) => {
-    Person.findById(request.params.id)
-        .then(person => {
-            response.json(person)
-        })
-        .catch(error => next(error))
+  Person.findById(request.params.id)
+    .then(person => {
+      response.json(person)
+    })
+    .catch(error => next(error))
 })
 
 app.delete('/api/persons/:id', (request, response, next) => {
-    Person.findByIdAndDelete(request.params.id)
+  Person.findByIdAndDelete(request.params.id)
     .then(result => {
-        console.log(`deleted person : ${JSON.stringify(result)}`)
-        if (!result) {
-            next(new Error('person not found'))
-        } else {
-            response.status(204).end() 
-        }
+      if (!result) {
+        next(new Error('person not found'))
+      } else {
+        response.status(204).end()
+      }
     })
     .catch(error => next(error))
 })
 
 app.post('/api/persons', (request, response, next) => {
-    
-    const body = request.body 
 
-    if (!body.name || !body.number) {
-        return response.status(400).json({
-            error: 'content missing',
-            req: request.body
-        })
-    }
+  const { name, number } = request.body
 
-    const newPerson = new Person({
-        name: body.name,
-        number: body.number
-    })
+  const newPerson = new Person({
+    name: name,
+    number: number
+  })
 
-    newPerson.save()
+  newPerson.save({ runValidators: true, context: 'query' })
     .then(savedPerson => {
-        response.json(savedPerson)
+      response.json(savedPerson)
     })
     .catch(error => next(error))
 })
 
+app.put('/api/persons/:id', (request, response, next) => {
+  const { name, number } = request.body
+  const id = request.params.id
+
+  Person.findOneAndUpdate(
+    { _id: id, name: name },
+    { name, number },
+    { new: true, runValidators: true, context: 'query' })
+    .then(replacement => {
+      response.json(replacement)
+    })
+    .catch(error => next(error))
+})
 
 /* error handling middleware */
 const errorHandler = (error, request, response, next) => {
-    console.error(error.message)
+  console.error(error.message)
 
-    if (error.name === 'CastError') {
-        return response.status(400).send({error: 'malformed id'})
-    }
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformed id' })
+  } else if (error.name === 'MissingContent') {
+    return response.status(400).json({
+      error: error.message,
+      req: request.body
+    })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
+  }
 
-    next(error)
+  next(error)
 }
 app.use(errorHandler)
 

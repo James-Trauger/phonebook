@@ -24,5 +24,16 @@ POST http://localhost:3001/api/persons
 Content-Type: application/json
 
 {
-    "name": "new persons"
+    "name": "next",
+    "number": "123-45678"
+}
+
+###
+
+PUT http://localhost:3001/api/persons/679901153a3ce432eef4048e
+Content-Type: application/json
+
+{
+    "name": "james",
+    "number": "12-345678"
 }
